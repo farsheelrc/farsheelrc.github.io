@@ -1,1 +1,318 @@
-Test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .form-container {
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="number"] {
+            width: 100px;
+            display: inline-block;
+        }
+        .inline-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .inline-group label {
+            margin-bottom: 0;
+        }
+        .inline-group select {
+            width: 150px;
+        }
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .save-btn {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+        }
+        .cancel-btn {
+            background-color: transparent;
+            color: #007bff;
+            border: none;
+            text-decoration: underline;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .checkbox-group label {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tax Calculator</h1>
+    <div class="description">Calculate tax based on your configuration</div>
+    <div class="form-container">
+        <div class="form-group">
+            <label for="price">Price ($)</label>
+            <input type="number" id="price" value="120" step="0.01" min="0">
+        </div>
+
+        <div class="form-group">
+            <label for="calculationType">Calculation Type</label>
+            <select id="calculationType">
+                <option value="inclusive">Tax-Inclusive (Reverse Calculate Tax)</option>
+                <option value="exclusive">Tax-Exclusive (Calculate Tax and Total)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="taxName">Name</label>
+            <input type="text" id="taxName" value="FMSDOM Tax Test">
+        </div>
+
+        <div class="form-group">
+            <label for="taxLabel1">Tax Label 1</label>
+            <input type="text" id="taxLabel1" value="Tax 1">
+        </div>
+
+        <div class="form-group inline-group">
+            <label>Rate 1</label>
+            <span>%</span>
+            <input type="number" id="taxRate1" value="5.8" step="0.1" min="0">
+        </div>
+
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 1 if over this amount</label>
+            <span>$</span>
+            <input type="number" id="taxThreshold1" value="50" step="0.01" min="0">
+            <label>Apply to</label>
+            <select id="taxApply1">
+                <option value="amountOver">Amount Over</option>
+                <option value="fullAmount">Full Amount</option>
+            </select>
+        </div>
+
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 1 up to this amount</label>
+            <span>$</span>
+            <input type="number" id="taxLimit1" value="0" step="0.01" min="0">
+        </div>
+
+        <div class="form-group">
+            <label for="taxLabel2">Tax Label 2</label>
+            <input type="text" id="taxLabel2" placeholder="Enter a tax label">
+        </div>
+
+        <div class="form-group inline-group">
+            <label>Rate 2</label>
+            <span>%</span>
+            <input type="number" id="taxRate2" value="2.2" step="0.1" min="0">
+        </div>
+
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 2 if over this amount</label>
+            <span>$</span>
+            <input type="number" id="taxThreshold2" value="110" step="0.01" min="0">
+            <label>Apply to</label>
+            <select id="taxApply2">
+                <option value="fullAmount">Full Amount</option>
+                <option value="amountOver">Amount Over</option>
+            </select>
+        </div>
+
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 2 up to this amount</label>
+            <span>$</span>
+            <input type="number" id="taxLimit2" value="0" step="0.01" min="0">
+        </div>
+
+        <div class="form-group checkbox-group">
+            <input type="checkbox" id="compounded">
+            <label for="compounded">Compounded</label>
+        </div>
+
+        <div class="buttons">
+            <button class="save-btn" onclick="calculateTax()">Calculate</button>
+            <button class="cancel-btn" onclick="resetForm()">Cancel</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function calculateTax() {
+            // Get input values
+            const price = parseFloat(document.getElementById('price').value);
+            const calculationType = document.getElementById('calculationType').value;
+            const taxRate1 = parseFloat(document.getElementById('taxRate1').value) / 100;
+            const taxThreshold1 = parseFloat(document.getElementById('taxThreshold1').value);
+            const taxLimit1 = parseFloat(document.getElementById('taxLimit1').value);
+            const taxApply1 = document.getElementById('taxApply1').value;
+            const taxRate2 = parseFloat(document.getElementById('taxRate2').value) / 100;
+            const taxThreshold2 = parseFloat(document.getElementById('taxThreshold2').value);
+            const taxLimit2 = parseFloat(document.getElementById('taxLimit2').value);
+            const taxApply2 = document.getElementById('taxApply2').value;
+            const compounded = document.getElementById('compounded').checked;
+            const resultDiv = document.getElementById('result');
+
+            let preTaxAmount, totalTax, totalAmount;
+
+            if (calculationType === 'inclusive') {
+                // Reverse calculate for tax-inclusive price
+                if (!compounded) {
+                    // Non-compounded: Solve price = X + tax1 + tax2
+                    if (taxApply1 === 'amountOver' && taxApply2 === 'fullAmount') {
+                        // price = X + taxRate1 * (X - taxThreshold1) + taxRate2 * X
+                        // price = X + taxRate1 * X - taxRate1 * taxThreshold1 + taxRate2 * X
+                        // price = (1 + taxRate1 + taxRate2) * X - taxRate1 * taxThreshold1
+                        preTaxAmount = (price + taxRate1 * taxThreshold1) / (1 + taxRate1 + taxRate2);
+                    } else {
+                        resultDiv.innerHTML = 'Unsupported tax application combination for reverse calculation.';
+                        return;
+                    }
+                } else {
+                    // Compounded: More complex, solve iteratively or approximate
+                    // For simplicity, we'll assume non-compounded for now
+                    resultDiv.innerHTML = 'Compounded tax reverse calculation not supported yet.';
+                    return;
+                }
+
+                // Calculate tax based on thresholds
+                let tax1 = 0;
+                if (preTaxAmount > taxThreshold1) {
+                    if (taxApply1 === 'amountOver') {
+                        const taxableAmount1 = (taxLimit1 === 0 || preTaxAmount <= taxLimit1) ? (preTaxAmount - taxThreshold1) : (taxLimit1 - taxThreshold1);
+                        tax1 = taxRate1 * taxableAmount1;
+                    } else {
+                        tax1 = taxRate1 * preTaxAmount;
+                    }
+                }
+                let tax2 = 0;
+                if (preTaxAmount > taxThreshold2) {
+                    if (taxApply2 === 'fullAmount') {
+                        tax2 = taxRate2 * preTaxAmount;
+                    } else {
+                        const taxableAmount2 = (taxLimit2 === 0 || preTaxAmount <= taxLimit2) ? (preTaxAmount - taxThreshold2) : (taxLimit2 - taxThreshold2);
+                        tax2 = taxRate2 * taxableAmount2;
+                    }
+                }
+                totalTax = tax1 + tax2;
+                totalAmount = price;
+            } else {
+                // Forward calculate for tax-exclusive price
+                preTaxAmount = price;
+                let tax1 = 0;
+                if (preTaxAmount > taxThreshold1) {
+                    if (taxApply1 === 'amountOver') {
+                        const taxableAmount1 = (taxLimit1 === 0 || preTaxAmount <= taxLimit1) ? (preTaxAmount - taxThreshold1) : (taxLimit1 - taxThreshold1);
+                        tax1 = taxRate1 * taxableAmount1;
+                    } else {
+                        tax1 = taxRate1 * preTaxAmount;
+                    }
+                }
+                let tax2 = 0;
+                if (preTaxAmount > taxThreshold2) {
+                    if (taxApply2 === 'fullAmount') {
+                        tax2 = taxRate2 * preTaxAmount;
+                    } else {
+                        const taxableAmount2 = (taxLimit2 === 0 || preTaxAmount <= taxLimit2) ? (preTaxAmount - taxThreshold2) : (taxLimit2 - taxThreshold2);
+                        tax2 = taxRate2 * taxableAmount2;
+                    }
+                }
+                if (compounded) {
+                    totalTax = tax1 + tax2 + (tax1 * taxRate2); // Simplified compounding
+                } else {
+                    totalTax = tax1 + tax2;
+                }
+                totalAmount = preTaxAmount + totalTax;
+            }
+
+            // Round for display
+            preTaxAmount = preTaxAmount.toFixed(2);
+            totalTax = totalTax.toFixed(2);
+            totalAmount = totalAmount.toFixed(2);
+
+            // Display results
+            resultDiv.innerHTML = `
+                <strong>Results:</strong><br>
+                Pre-Tax Amount: $${preTaxAmount}<br>
+                Total Tax: $${totalTax}<br>
+                Total Amount (with Tax): $${totalAmount}
+            `;
+        }
+
+        function resetForm() {
+            document.getElementById('price').value = '120';
+            document.getElementById('calculationType').value = 'inclusive';
+            document.getElementById('taxName').value = 'FMSDOM Tax Test';
+            document.getElementById('taxLabel1').value = 'Tax 1';
+            document.getElementById('taxRate1').value = '5.8';
+            document.getElementById('taxThreshold1').value = '50';
+            document.getElementById('taxLimit1').value = '0';
+            document.getElementById('taxApply1').value = 'amountOver';
+            document.getElementById('taxLabel2').value = '';
+            document.getElementById('taxRate2').value = '2.2';
+            document.getElementById('taxThreshold2').value = '110';
+            document.getElementById('taxLimit2').value = '0';
+            document.getElementById('taxApply2').value = 'fullAmount';
+            document.getElementById('compounded').checked = false;
+            document.getElementById('result').innerHTML = '';
+        }
+
+        // Trigger calculation on page load with default values
+        window.onload = calculateTax;
+    </script>
+</body>
+</html>
