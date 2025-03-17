@@ -106,7 +106,7 @@
     <div class="form-container">
         <div class="form-group">
             <label for="price">Price ($)</label>
-            <input type="number" id="price" value="120" step="0.01" min="0">
+            <input type="number" id="price" value="0" step="0.01" min="0">
         </div>
 
         <div class="form-group">
@@ -119,63 +119,137 @@
 
         <div class="form-group">
             <label for="taxName">Name</label>
-            <input type="text" id="taxName" value="FMSDOM Tax Test">
+            <input type="text" id="taxName" value="">
         </div>
 
+        <!-- Tax Rate 1 -->
         <div class="form-group">
             <label for="taxLabel1">Tax Label 1</label>
             <input type="text" id="taxLabel1" value="Tax 1">
         </div>
-
         <div class="form-group inline-group">
             <label>Rate 1</label>
             <span>%</span>
-            <input type="number" id="taxRate1" value="5.8" step="0.1" min="0">
+            <input type="number" id="taxRate1" value="0" step="0.1" min="0">
         </div>
-
         <div class="form-group inline-group">
             <label>Apply Tax Rate 1 if over this amount</label>
             <span>$</span>
-            <input type="number" id="taxThreshold1" value="50" step="0.01" min="0">
+            <input type="number" id="taxThreshold1" value="0" step="0.01" min="0">
             <label>Apply to</label>
             <select id="taxApply1">
                 <option value="amountOver">Amount Over</option>
                 <option value="fullAmount">Full Amount</option>
             </select>
         </div>
-
         <div class="form-group inline-group">
             <label>Apply Tax Rate 1 up to this amount</label>
             <span>$</span>
             <input type="number" id="taxLimit1" value="0" step="0.01" min="0">
         </div>
 
+        <!-- Tax Rate 2 -->
         <div class="form-group">
             <label for="taxLabel2">Tax Label 2</label>
             <input type="text" id="taxLabel2" placeholder="Enter a tax label">
         </div>
-
         <div class="form-group inline-group">
             <label>Rate 2</label>
             <span>%</span>
-            <input type="number" id="taxRate2" value="2.2" step="0.1" min="0">
+            <input type="number" id="taxRate2" value="0" step="0.1" min="0">
         </div>
-
         <div class="form-group inline-group">
             <label>Apply Tax Rate 2 if over this amount</label>
             <span>$</span>
-            <input type="number" id="taxThreshold2" value="110" step="0.01" min="0">
+            <input type="number" id="taxThreshold2" value="0" step="0.01" min="0">
             <label>Apply to</label>
             <select id="taxApply2">
                 <option value="fullAmount">Full Amount</option>
                 <option value="amountOver">Amount Over</option>
             </select>
         </div>
-
         <div class="form-group inline-group">
             <label>Apply Tax Rate 2 up to this amount</label>
             <span>$</span>
             <input type="number" id="taxLimit2" value="0" step="0.01" min="0">
+        </div>
+
+        <!-- Tax Rate 3 -->
+        <div class="form-group">
+            <label for="taxLabel3">Tax Label 3</label>
+            <input type="text" id="taxLabel3" placeholder="Enter a tax label">
+        </div>
+        <div class="form-group inline-group">
+            <label>Rate 3</label>
+            <span>%</span>
+            <input type="number" id="taxRate3" value="0" step="0.1" min="0">
+        </div>
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 3 if over this amount</label>
+            <span>$</span>
+            <input type="number" id="taxThreshold3" value="0" step="0.01" min="0">
+            <label>Apply to</label>
+            <select id="taxApply3">
+                <option value="fullAmount">Full Amount</option>
+                <option value="amountOver">Amount Over</option>
+            </select>
+        </div>
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 3 up to this amount</label>
+            <span>$</span>
+            <input type="number" id="taxLimit3" value="0" step="0.01" min="0">
+        </div>
+
+        <!-- Tax Rate 4 -->
+        <div class="form-group">
+            <label for="taxLabel4">Tax Label 4</label>
+            <input type="text" id="taxLabel4" placeholder="Enter a tax label">
+        </div>
+        <div class="form-group inline-group">
+            <label>Rate 4</label>
+            <span>%</span>
+            <input type="number" id="taxRate4" value="0" step="0.1" min="0">
+        </div>
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 4 if over this amount</label>
+            <span>$</span>
+            <input type="number" id="taxThreshold4" value="0" step="0.01" min="0">
+            <label>Apply to</label>
+            <select id="taxApply4">
+                <option value="fullAmount">Full Amount</option>
+                <option value="amountOver">Amount Over</option>
+            </select>
+        </div>
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 4 up to this amount</label>
+            <span>$</span>
+            <input type="number" id="taxLimit4" value="0" step="0.01" min="0">
+        </div>
+
+        <!-- Tax Rate 5 -->
+        <div class="form-group">
+            <label for="taxLabel5">Tax Label 5</label>
+            <input type="text" id="taxLabel5" placeholder="Enter a tax label">
+        </div>
+        <div class="form-group inline-group">
+            <label>Rate 5</label>
+            <span>%</span>
+            <input type="number" id="taxRate5" value="0" step="0.1" min="0">
+        </div>
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 5 if over this amount</label>
+            <span>$</span>
+            <input type="number" id="taxThreshold5" value="0" step="0.01" min="0">
+            <label>Apply to</label>
+            <select id="taxApply5">
+                <option value="fullAmount">Full Amount</option>
+                <option value="amountOver">Amount Over</option>
+            </select>
+        </div>
+        <div class="form-group inline-group">
+            <label>Apply Tax Rate 5 up to this amount</label>
+            <span>$</span>
+            <input type="number" id="taxLimit5" value="0" step="0.01" min="0">
         </div>
 
         <div class="form-group checkbox-group">
@@ -196,85 +270,118 @@
             // Get input values
             const price = parseFloat(document.getElementById('price').value);
             const calculationType = document.getElementById('calculationType').value;
-            const taxRate1 = parseFloat(document.getElementById('taxRate1').value) / 100;
-            const taxThreshold1 = parseFloat(document.getElementById('taxThreshold1').value);
-            const taxLimit1 = parseFloat(document.getElementById('taxLimit1').value);
-            const taxApply1 = document.getElementById('taxApply1').value;
-            const taxRate2 = parseFloat(document.getElementById('taxRate2').value) / 100;
-            const taxThreshold2 = parseFloat(document.getElementById('taxThreshold2').value);
-            const taxLimit2 = parseFloat(document.getElementById('taxLimit2').value);
-            const taxApply2 = document.getElementById('taxApply2').value;
-            const compounded = document.getElementById('compounded').checked;
             const resultDiv = document.getElementById('result');
+
+            // Get tax configuration for up to 5 rates
+            const taxRates = [
+                parseFloat(document.getElementById('taxRate1').value) / 100,
+                parseFloat(document.getElementById('taxRate2').value) / 100,
+                parseFloat(document.getElementById('taxRate3').value) / 100,
+                parseFloat(document.getElementById('taxRate4').value) / 100,
+                parseFloat(document.getElementById('taxRate5').value) / 100
+            ];
+            const taxThresholds = [
+                parseFloat(document.getElementById('taxThreshold1').value),
+                parseFloat(document.getElementById('taxThreshold2').value),
+                parseFloat(document.getElementById('taxThreshold3').value),
+                parseFloat(document.getElementById('taxThreshold4').value),
+                parseFloat(document.getElementById('taxThreshold5').value)
+            ];
+            const taxLimits = [
+                parseFloat(document.getElementById('taxLimit1').value),
+                parseFloat(document.getElementById('taxLimit2').value),
+                parseFloat(document.getElementById('taxLimit3').value),
+                parseFloat(document.getElementById('taxLimit4').value),
+                parseFloat(document.getElementById('taxLimit5').value)
+            ];
+            const taxApply = [
+                document.getElementById('taxApply1').value,
+                document.getElementById('taxApply2').value,
+                document.getElementById('taxApply3').value,
+                document.getElementById('taxApply4').value,
+                document.getElementById('taxApply5').value
+            ];
+            const compounded = document.getElementById('compounded').checked;
 
             let preTaxAmount, totalTax, totalAmount;
 
             if (calculationType === 'inclusive') {
                 // Reverse calculate for tax-inclusive price
                 if (!compounded) {
-                    // Non-compounded: Solve price = X + tax1 + tax2
-                    if (taxApply1 === 'amountOver' && taxApply2 === 'fullAmount') {
-                        // price = X + taxRate1 * (X - taxThreshold1) + taxRate2 * X
-                        // price = X + taxRate1 * X - taxRate1 * taxThreshold1 + taxRate2 * X
-                        // price = (1 + taxRate1 + taxRate2) * X - taxRate1 * taxThreshold1
-                        preTaxAmount = (price + taxRate1 * taxThreshold1) / (1 + taxRate1 + taxRate2);
-                    } else {
-                        resultDiv.innerHTML = 'Unsupported tax application combination for reverse calculation.';
-                        return;
+                    // Non-compounded: Iterative approximation for multiple rates
+                    let low = 0, high = price * 2;
+                    for (let i = 0; i < 100; i++) { // Newton-Raphson-like iteration
+                        preTaxAmount = (low + high) / 2;
+                        let calculatedTax = 0;
+                        for (let j = 0; j < 5; j++) {
+                            if (preTaxAmount > taxThresholds[j] && taxRates[j] > 0) {
+                                if (taxApply[j] === 'amountOver') {
+                                    const taxableAmount = (taxLimits[j] === 0 || preTaxAmount <= taxLimits[j]) 
+                                        ? (preTaxAmount - taxThresholds[j]) 
+                                        : (taxLimits[j] - taxThresholds[j]);
+                                    calculatedTax += taxRates[j] * taxableAmount;
+                                } else {
+                                    calculatedTax += taxRates[j] * preTaxAmount;
+                                }
+                            }
+                        }
+                        const total = preTaxAmount + calculatedTax;
+                        if (total > price) high = preTaxAmount;
+                        else low = preTaxAmount;
                     }
+                    preTaxAmount = (low + high) / 2;
                 } else {
-                    // Compounded: More complex, solve iteratively or approximate
-                    // For simplicity, we'll assume non-compounded for now
                     resultDiv.innerHTML = 'Compounded tax reverse calculation not supported yet.';
                     return;
                 }
 
                 // Calculate tax based on thresholds
-                let tax1 = 0;
-                if (preTaxAmount > taxThreshold1) {
-                    if (taxApply1 === 'amountOver') {
-                        const taxableAmount1 = (taxLimit1 === 0 || preTaxAmount <= taxLimit1) ? (preTaxAmount - taxThreshold1) : (taxLimit1 - taxThreshold1);
-                        tax1 = taxRate1 * taxableAmount1;
-                    } else {
-                        tax1 = taxRate1 * preTaxAmount;
+                totalTax = 0;
+                for (let j = 0; j < 5; j++) {
+                    if (preTaxAmount > taxThresholds[j] && taxRates[j] > 0) {
+                        if (taxApply[j] === 'amountOver') {
+                            const taxableAmount = (taxLimits[j] === 0 || preTaxAmount <= taxLimits[j]) 
+                                ? (preTaxAmount - taxThresholds[j]) 
+                                : (taxLimits[j] - taxThresholds[j]);
+                            totalTax += taxRates[j] * taxableAmount;
+                        } else {
+                            totalTax += taxRates[j] * preTaxAmount;
+                        }
                     }
                 }
-                let tax2 = 0;
-                if (preTaxAmount > taxThreshold2) {
-                    if (taxApply2 === 'fullAmount') {
-                        tax2 = taxRate2 * preTaxAmount;
-                    } else {
-                        const taxableAmount2 = (taxLimit2 === 0 || preTaxAmount <= taxLimit2) ? (preTaxAmount - taxThreshold2) : (taxLimit2 - taxThreshold2);
-                        tax2 = taxRate2 * taxableAmount2;
-                    }
-                }
-                totalTax = tax1 + tax2;
                 totalAmount = price;
             } else {
                 // Forward calculate for tax-exclusive price
                 preTaxAmount = price;
-                let tax1 = 0;
-                if (preTaxAmount > taxThreshold1) {
-                    if (taxApply1 === 'amountOver') {
-                        const taxableAmount1 = (taxLimit1 === 0 || preTaxAmount <= taxLimit1) ? (preTaxAmount - taxThreshold1) : (taxLimit1 - taxThreshold1);
-                        tax1 = taxRate1 * taxableAmount1;
-                    } else {
-                        tax1 = taxRate1 * preTaxAmount;
-                    }
-                }
-                let tax2 = 0;
-                if (preTaxAmount > taxThreshold2) {
-                    if (taxApply2 === 'fullAmount') {
-                        tax2 = taxRate2 * preTaxAmount;
-                    } else {
-                        const taxableAmount2 = (taxLimit2 === 0 || preTaxAmount <= taxLimit2) ? (preTaxAmount - taxThreshold2) : (taxLimit2 - taxThreshold2);
-                        tax2 = taxRate2 * taxableAmount2;
+                totalTax = 0;
+                for (let j = 0; j < 5; j++) {
+                    if (preTaxAmount > taxThresholds[j] && taxRates[j] > 0) {
+                        if (taxApply[j] === 'amountOver') {
+                            const taxableAmount = (taxLimits[j] === 0 || preTaxAmount <= taxLimits[j]) 
+                                ? (preTaxAmount - taxThresholds[j]) 
+                                : (taxLimits[j] - taxThresholds[j]);
+                            totalTax += taxRates[j] * taxableAmount;
+                        } else {
+                            totalTax += taxRates[j] * preTaxAmount;
+                        }
                     }
                 }
                 if (compounded) {
-                    totalTax = tax1 + tax2 + (tax1 * taxRate2); // Simplified compounding
-                } else {
-                    totalTax = tax1 + tax2;
+                    // Simplified compounding (sequential application)
+                    let base = preTaxAmount;
+                    for (let j = 0; j < 5; j++) {
+                        if (base > taxThresholds[j] && taxRates[j] > 0) {
+                            if (taxApply[j] === 'amountOver') {
+                                const taxableAmount = (taxLimits[j] === 0 || base <= taxLimits[j]) 
+                                    ? (base - taxThresholds[j]) 
+                                    : (taxLimits[j] - taxThresholds[j]);
+                                base += taxRates[j] * taxableAmount;
+                            } else {
+                                base += taxRates[j] * base;
+                            }
+                        }
+                    }
+                    totalTax = base - preTaxAmount;
                 }
                 totalAmount = preTaxAmount + totalTax;
             }
@@ -294,19 +401,34 @@
         }
 
         function resetForm() {
-            document.getElementById('price').value = '120';
+            document.getElementById('price').value = '0';
             document.getElementById('calculationType').value = 'inclusive';
-            document.getElementById('taxName').value = 'FMSDOM Tax Test';
+            document.getElementById('taxName').value = '';
             document.getElementById('taxLabel1').value = 'Tax 1';
-            document.getElementById('taxRate1').value = '5.8';
-            document.getElementById('taxThreshold1').value = '50';
+            document.getElementById('taxRate1').value = '0';
+            document.getElementById('taxThreshold1').value = '0';
             document.getElementById('taxLimit1').value = '0';
             document.getElementById('taxApply1').value = 'amountOver';
             document.getElementById('taxLabel2').value = '';
-            document.getElementById('taxRate2').value = '2.2';
-            document.getElementById('taxThreshold2').value = '110';
+            document.getElementById('taxRate2').value = '0';
+            document.getElementById('taxThreshold2').value = '0';
             document.getElementById('taxLimit2').value = '0';
             document.getElementById('taxApply2').value = 'fullAmount';
+            document.getElementById('taxLabel3').value = '';
+            document.getElementById('taxRate3').value = '0';
+            document.getElementById('taxThreshold3').value = '0';
+            document.getElementById('taxLimit3').value = '0';
+            document.getElementById('taxApply3').value = 'fullAmount';
+            document.getElementById('taxLabel4').value = '';
+            document.getElementById('taxRate4').value = '0';
+            document.getElementById('taxThreshold4').value = '0';
+            document.getElementById('taxLimit4').value = '0';
+            document.getElementById('taxApply4').value = 'fullAmount';
+            document.getElementById('taxLabel5').value = '';
+            document.getElementById('taxRate5').value = '0';
+            document.getElementById('taxThreshold5').value = '0';
+            document.getElementById('taxLimit5').value = '0';
+            document.getElementById('taxApply5').value = 'fullAmount';
             document.getElementById('compounded').checked = false;
             document.getElementById('result').innerHTML = '';
         }
