@@ -849,10 +849,27 @@ async function drop(id, q, fromEl, point, field = 'itemID'){
   if (!r) { toast('Pick a register first', 'warn'); return; }
   if (!S.items[id]) S.items[id] = { id, name: id };
   const flying = fly(id, fromEl, point);
+  if ($('#autoPush').checked) {
+    // A real station reports each tag as it reads it: one line of quantity 1 per unit, sent at once. So
+    // quick drops are never merged into one line, and never wait on a debounce. Quantity 0 still goes
+    // out as typed, so the platform's rejection of it can be exercised.
+    const units = q > 0 ? Math.max(1, Math.round(q)) : 1;
+    for (let i = 0; i < units; i++) sendNow({ field, code: id, quantity: q > 0 ? 1 : q });
+    await flying; gulp(); renderBin(); renderCart(); setLcd();
+    return;
+  }
   const p = S.pending.find(x => x.code === id && x.field === field);
   p ? p.quantity += q : S.pending.push({ field, code: id, quantity: q });
   await flying; gulp(); renderBin(); renderCart(); setLcd();
-  if ($('#autoPush').checked) schedulePush();
+}
+
+/** Drops queued to go out one PATCH each, in order — so a new basket is created once and lines land in the
+ *  order they were dropped. */
+let sendChain = Promise.resolve();
+let inFlight = 0;
+function sendNow(entry){
+  inFlight++; renderCart();
+  sendChain = sendChain.then(() => sendBatch([entry], { recheck: false })).finally(() => { inFlight--; renderCart(); });
 }
 /** A cart the till will refuse (HW-0008 guards): abandoned, parked, or already turned into an order. Items added to
  *  one still announce themselves by push, and the till rejects every one, so such a cart is never reused. */
@@ -861,8 +878,6 @@ function cartClosed(c){
   const st = String(c.status || '').toUpperCase();
   return ['ABANDONED', 'SUSPENDED', 'RESUMED', 'COMPLETED', 'CLOSED'].includes(st) || !!c.orderID;
 }
-let pushTimer = null;
-function schedulePush(){ clearTimeout(pushTimer); pushTimer = setTimeout(pushPending, 450); }
 
 /* ───────────────── cart calls ───────────────── */
 async function createCart(){
@@ -886,12 +901,21 @@ async function createCart(){
 
 async function pushPending(){
   if (S.busy || !S.pending.length) return;
+  await sendBatch(S.pending.splice(0), { recheck: true });
+}
+
+/**
+ * Send [batch] in one PATCH, opening a basket first if there is none or the last one was closed.
+ *
+ * @param recheck re-read the cart before sending. The manual send does, since the till may have closed the
+ *   basket since it was last read (clearing its cart abandons it). A drop sent at once does not — that GET is
+ *   what would make it late — and relies on the read that follows every PATCH, which is at most one drop old.
+ */
+async function sendBatch(batch, { recheck }){
   S.busy = true; setLcd('READING TAGS…', 'busy'); $('#pushBtn').disabled = true;
-  const batch = S.pending.splice(0);
   try {
     if (S.cart?.cartID) {
-      // Re-read first: the till may have closed it since (clearing its cart abandons the basket).
-      await refreshCart(true);
+      if (recheck) await refreshCart(true);
       if (cartClosed(S.cart)) {
         toast(`Basket <b class="mono">${S.cart.cartID}</b> is ${esc(S.cart.status || 'ordered')}. Opening a new one.`, 'warn');
         S.cart = null; store.set(`cart.${S.env}.${reg().id}`, null);
@@ -911,12 +935,12 @@ async function pushPending(){
     const okCount = batch.length - dropped.length;
     if (okCount) toast(`Sent ${okCount} line${okCount > 1 ? 's' : ''} to the register`);
   } catch (e) {
+    // A drop that failed goes back to pending, where "Send pending to cart" can retry it.
     S.pending.unshift(...batch);
     toast(esc(e.message), 'bad'); setLcd('FAULT · ' + e.message.slice(0, 40), 'err');
   } finally {
-    S.busy = false; $('#pushBtn').disabled = false; renderBin(); renderCart();
+    S.busy = inFlight > 1; $('#pushBtn').disabled = false; renderBin(); renderCart();
     if (!$('#lcd').textContent.startsWith('FAULT')) setLcd();
-    if (S.pending.length && $('#autoPush').checked && !$('#lcd').textContent.startsWith('FAULT')) schedulePush();
   }
 }
 
