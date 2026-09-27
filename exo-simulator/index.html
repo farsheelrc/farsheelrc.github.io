@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EXO Station Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070d18; --bg2:#0c1422; --panel:#101a2b; --panel2:#152236; --line:#1f2f48; --line2:#2a3d5c;
+  --ink:#e6edf3; --ink2:#9fb0c2; --ink3:#6b7d91;
+  /* retailcloud blue (#0077ED, the retailcloud.com logo), lifted a step on dark surfaces so it stays legible */
+  --acc:#2b8cff; --acc2:#0077ED; --accHover:#4a9dff; --accGlow:rgba(0,119,237,.4); --onAcc:#ffffff;
+  --ok:#35d49a;
+  --warn:#ffb84d; --err:#ff5d6c; --info:#5cc8ff; --violet:#a78bfa;
+  --radius:14px; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace; --sans:'Space Grotesk',system-ui,sans-serif;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#eef2f5; --bg2:#e6ebf0; --panel:#ffffff; --panel2:#f5f7fa; --line:#dbe3ea; --line2:#c9d4de;
+  --ink:#0f1a24; --ink2:#44576a; --ink3:#7a8b9c; color-scheme:light;
+  --acc:#0077ED; --acc2:#005fc0; --accHover:#0068d0; --accGlow:rgba(0,119,237,.22); --ok:#12a36e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;
+  background-image:radial-gradient(1200px 600px at 70% -10%,rgba(0,119,237,.07),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(92,200,255,.06),transparent 60%);}
+button,input,select{font:inherit;color:inherit}
+.mono{font-family:var(--mono)}
+.muted{color:var(--ink2)} .dim{color:var(--ink3)}
+.hidden{display:none!important}
+
+/* ── top bar ───────────────────────────── */
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.02em}
+.brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--acc2),#5cc8ff);display:grid;place-items:center;color:var(--onAcc);font-weight:800;box-shadow:0 0 22px var(--accGlow)}
+.brand small{display:block;font-weight:500;color:var(--ink3);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.spacer{flex:1}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:7px;cursor:pointer;color:var(--ink2);font-weight:500;transition:.2s}
+.seg button.on{background:var(--acc2);color:var(--onAcc);box-shadow:0 0 14px var(--accGlow)}
+.seg button:disabled{cursor:not-allowed;opacity:.5}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12px;color:var(--ink2)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+.dot.ok{background:var(--ok);box-shadow:0 0 10px var(--ok)} .dot.bad{background:var(--err)}
+.btn{border:1px solid var(--line2);background:var(--panel2);padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:500;transition:transform .12s,background .2s,border-color .2s;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.btn:hover{border-color:var(--ink3)} .btn:active{transform:scale(.97)}
+.btn.primary{background:var(--acc2);border-color:var(--acc2);color:var(--onAcc);font-weight:600}
+.btn.primary:hover{background:var(--accHover);border-color:var(--accHover)}
+.btn.danger{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,var(--line))}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink2)} .btn.ghost:hover{color:var(--ink);border-color:var(--line)}
+.btn.sm{padding:5px 9px;font-size:12px;border-radius:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.iconbtn{width:34px;height:34px;padding:0;justify-content:center}
+
+/* ── layout ───────────────────────────── */
+main{display:grid;grid-template-columns:280px minmax(0,1fr) 360px;gap:16px;padding:16px 20px;min-height:calc(100vh - 60px)}
+@media (max-width:1180px){main{grid-template-columns:260px minmax(0,1fr)} #cartCol{grid-column:1 / -1}}
+@media (max-width:760px){main{grid-template-columns:1fr;padding:12px 16px} header{flex-wrap:wrap;padding:10px 16px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.card h3{margin:0 0 10px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;display:flex;align-items:center;gap:8px}
+.card h3 .spacer{flex:1}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+label.f{display:block;font-size:12px;color:var(--ink2);margin:10px 0 5px}
+input.t,select.t{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;outline:none;transition:border-color .2s,box-shadow .2s}
+input.t:focus,select.t:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--accGlow)}
+.row{display:flex;gap:8px;align-items:center}
+
+/* ── registers ───────────────────────────── */
+.reg{border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:.2s;position:relative;background:var(--panel2);margin-bottom:8px;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+.reg:hover{border-color:var(--line2);transform:translateY(-1px)}
+.reg.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 8px 26px -10px var(--accGlow)}
+.reg .top{display:flex;align-items:center;gap:8px}
+.reg .id{font-family:var(--mono);font-weight:500}
+.reg .name{font-size:12px;color:var(--ink2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px;text-transform:uppercase}
+.badge.exo{background:rgba(0,119,237,.14);color:var(--acc);border:1px solid rgba(0,119,237,.35)}
+.badge.noexo{background:rgba(255,184,77,.12);color:var(--warn);border:1px solid rgba(255,184,77,.3)}
+.badge.chk{background:var(--bg2);color:var(--ink3);border:1px solid var(--line)}
+.reg .x{position:absolute;right:6px;top:6px;opacity:0;transition:.2s}
+.reg:hover .x{opacity:1}
+
+/* ── station / bin ───────────────────────────── */
+.stage{position:relative;border-radius:18px;border:1px solid var(--line);overflow:hidden;min-height:420px;
+  background:radial-gradient(600px 300px at 50% 85%,rgba(0,119,237,.10),transparent 70%),linear-gradient(180deg,var(--panel) 0%,var(--bg2) 100%)}
+.stage-head{display:flex;align-items:center;gap:10px;padding:12px 14px;position:relative;z-index:3}
+.stage-head .title{font-weight:600}
+.lcd{font-family:var(--mono);font-size:12px;background:#04112a;color:#7cc0ff;padding:6px 10px;border-radius:8px;border:1px solid rgba(0,119,237,.3);text-shadow:0 0 8px var(--accGlow);min-width:190px}
+:root[data-theme="light"] .lcd{background:#062457}
+.binWrap{position:relative;height:340px;display:grid;place-items:center}
+#binSvg{width:min(520px,92%);height:auto;overflow:visible;filter:drop-shadow(0 30px 40px rgba(0,0,0,.35))}
+.waves{position:absolute;left:50%;top:58%;width:0;height:0;pointer-events:none;z-index:1}
+.waves i{position:absolute;left:-150px;top:-60px;width:300px;height:120px;border-radius:50%;border:2px solid var(--acc);opacity:0}
+.stage.scanning .waves i{animation:wave 1.8s ease-out infinite}
+.stage.scanning .waves i:nth-child(2){animation-delay:.6s}
+.stage.scanning .waves i:nth-child(3){animation-delay:1.2s}
+@keyframes wave{0%{transform:scale(.3);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+.binContents{position:absolute;left:50%;top:45%;width:min(360px,64%);height:120px;transform:translateX(-50%);z-index:2;pointer-events:none}
+.binItem{position:absolute;width:62px;height:62px;border-radius:12px;background:var(--panel2);border:2px solid rgba(255,255,255,.08);overflow:hidden;box-shadow:0 8px 16px rgba(0,0,0,.35);transition:transform .5s cubic-bezier(.2,1.3,.4,1),opacity .4s}
+.binItem img{width:100%;height:100%;object-fit:cover;display:block}
+.binItem .q{position:absolute;right:3px;bottom:3px;background:var(--acc2);color:var(--onAcc);font-size:10px;font-weight:700;border-radius:6px;padding:1px 5px;font-family:var(--mono)}
+.binItem .tag{position:absolute;left:4px;top:4px;width:10px;height:10px;border-radius:3px;background:var(--acc);box-shadow:0 0 8px var(--acc)}
+.binItem.leaving{opacity:0;transform:translateY(-120px) rotate(20deg) scale(.6)!important}
+#binSvg .rim{transition:filter .3s}
+.stage.gulp #binSvg{animation:gulp .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes gulp{0%{transform:scale(1)}30%{transform:scale(1.04,.95)}60%{transform:scale(.98,1.03)}100%{transform:scale(1)}}
+.stage.dragover{outline:2px dashed var(--acc);outline-offset:-10px}
+.stage.dragover #glowPanel{opacity:1}
+#glowPanel{transition:opacity .3s}
+.stage .emptyHint{position:absolute;left:0;right:0;top:64px;text-align:center;color:var(--ink3);font-size:13px;z-index:3;transition:opacity .3s}
+.stage-actions{position:absolute;left:14px;right:14px;bottom:14px;display:flex;gap:8px;z-index:4;flex-wrap:wrap;justify-content:center}
+.ledRow{display:flex;gap:6px;align-items:center}
+.led{width:9px;height:9px;border-radius:50%;background:#2a3a48}
+.led.g{background:var(--acc);box-shadow:0 0 10px var(--acc)} .led.a{background:var(--warn);box-shadow:0 0 10px var(--warn)} .led.r{background:var(--err);box-shadow:0 0 10px var(--err)}
+.led.blink{animation:blink .6s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+
+/* ── shelf ───────────────────────────── */
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.item{background:var(--panel2);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:grab;transition:transform .18s,border-color .2s,box-shadow .2s;position:relative;user-select:none;animation:pop .4s cubic-bezier(.2,1.4,.4,1) both}
+.item:hover{transform:translateY(-3px);border-color:var(--acc);box-shadow:0 12px 26px -12px var(--accGlow)}
+.item:active{cursor:grabbing}
+.item .img{aspect-ratio:1/1;background:var(--bg2);display:grid;place-items:center;overflow:hidden}
+.item .img img{width:100%;height:100%;object-fit:cover}
+.item .meta{padding:8px 9px}
+.item .nm{font-size:12px;font-weight:600;line-height:1.25;height:30px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.item .sub{display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--ink3)}
+.item .sub b{color:var(--acc);font-weight:600}
+.item .add{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:var(--acc2);color:var(--onAcc);border:0;display:grid;place-items:center;font-weight:800;cursor:pointer;transform:scale(0);transition:transform .2s cubic-bezier(.2,1.6,.4,1);box-shadow:0 4px 12px var(--accGlow)}
+.item:hover .add{transform:scale(1)}
+.item .rm{position:absolute;top:6px;left:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:0;cursor:pointer;opacity:0;transition:.2s;font-size:12px}
+.item:hover .rm{opacity:1}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg2)}
+.qty button{border:0;background:transparent;width:30px;height:34px;cursor:pointer;font-size:16px;color:var(--ink2)}
+.qty button:hover{color:var(--ink);background:var(--panel2)}
+.qty input{width:52px;text-align:center;border:0;background:transparent;outline:none;font-family:var(--mono)}
+.qty input{-moz-appearance:textfield;appearance:textfield}
+.qty input::-webkit-outer-spin-button,.qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.flyer{position:fixed;z-index:100;pointer-events:none;border-radius:12px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,.45);border:2px solid var(--acc)}
+.flyer img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ── cart ───────────────────────────── */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px}
+.kv dt{color:var(--ink3)} .kv dd{margin:0;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.line{display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);margin-top:8px;animation:slideIn .4s cubic-bezier(.2,1.2,.4,1) both}
+.line .th{width:40px;height:40px;border-radius:8px;overflow:hidden;flex:none;background:var(--bg2)}
+.line .th img{width:100%;height:100%;object-fit:cover}
+.line .nf{flex:1;min-width:0}
+.line .nf .a{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.line .nf .b{font-size:11px;color:var(--ink3);font-family:var(--mono)}
+.line .qn{font-family:var(--mono);font-weight:600}
+.line.discarded{opacity:.45;text-decoration:line-through}
+.status{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:var(--bg2);border:1px solid var(--line)}
+.status.ACTIVE,.status.Active{color:var(--acc);border-color:rgba(0,119,237,.4)}
+.status.Abandoned,.status.ABANDONED{color:var(--err)}
+.empty{padding:24px 10px;text-align:center;color:var(--ink3);font-size:13px}
+
+/* ── log ───────────────────────────── */
+.log{max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:0 -4px;padding:0 4px}
+.ent{border:1px solid var(--line);border-radius:10px;background:var(--bg2);font-size:12px;animation:slideIn .3s ease both}
+.ent summary{list-style:none;display:flex;gap:8px;align-items:center;padding:7px 9px;cursor:pointer}
+.ent summary::-webkit-details-marker{display:none}
+.ent .m{font-family:var(--mono);font-weight:600;font-size:11px;padding:1px 6px;border-radius:5px;background:var(--panel2)}
+.ent .m.POST{color:var(--info)} .ent .m.PATCH{color:var(--violet)} .ent .m.GET{color:var(--acc)} .ent .m.DELETE{color:var(--err)} .ent .m.PUT{color:var(--warn)}
+.ent .p{flex:1;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink2)}
+.ent .c{font-family:var(--mono);font-weight:600} .ent .c.ok{color:var(--ok)} .ent .c.bad{color:var(--err)} .ent .c.pend{color:var(--warn)}
+.ent pre{margin:0;padding:8px 10px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;white-space:pre-wrap;word-break:break-all;max-height:260px;overflow:auto;color:var(--ink2)}
+.ent .tools{display:flex;gap:6px;padding:0 10px 8px}
+
+/* ── login overlay ───────────────────────────── */
+.overlay{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(5,8,12,.72);backdrop-filter:blur(10px);animation:fade .3s ease;padding:16px}
+.modal{width:min(440px,100%);background:var(--panel);border:1px solid var(--line2);border-radius:20px;padding:24px;box-shadow:0 40px 80px rgba(0,0,0,.5);animation:rise .45s cubic-bezier(.2,1.2,.4,1)}
+.modal h2{margin:0 0 4px;font-size:22px}
+.tabs{display:flex;gap:4px;margin:16px 0 4px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:transparent;padding:8px 12px;cursor:pointer;color:var(--ink3);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--ink);border-color:var(--acc)}
+.err{color:var(--err);font-size:12px;margin-top:10px;min-height:16px}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+/* ── toast ───────────────────────────── */
+#toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:200;max-width:calc(100vw - 32px)}
+.toast{background:var(--panel);border:1px solid var(--line2);border-left:3px solid var(--acc);padding:10px 14px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:toastIn .4s cubic-bezier(.2,1.3,.4,1);font-size:13px;max-width:360px}
+.toast.bad{border-left-color:var(--err)} .toast.warn{border-left-color:var(--warn)}
+.toast.out{animation:toastOut .3s ease forwards}
+
+@keyframes pop{from{opacity:0;transform:scale(.9) translateY(6px)}to{opacity:1;transform:none}}
+@keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(30px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(40px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+details.adv summary{cursor:pointer;color:var(--ink3);font-size:12px;margin-top:12px}
+.hosts{font-family:var(--mono);font-size:11px;color:var(--ink3);word-break:break-all}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><div class="logo">EX</div><div>EXO Station Simulator<small>STARKEXO · RFID basket</small></div></div>
+  <div class="spacer"></div>
+  <div class="seg" id="envSeg"></div>
+  <span class="pill" id="authPill"><span class="dot" id="authDot"></span><span id="authText">Signed out</span></span>
+  <button class="btn ghost iconbtn" id="themeBtn" title="Toggle theme">◐</button>
+  <button class="btn sm" id="logoutBtn">Sign out</button>
+</header>
+
+<main>
+  <!-- LEFT: registers + station config -->
+  <div class="col">
+    <div class="card">
+      <h3>Registers <span class="spacer"></span><span class="dim" id="regCount"></span></h3>
+      <div class="row">
+        <input class="t mono" id="regInput" placeholder="Register ID" inputmode="numeric">
+        <button class="btn primary" id="regAdd">Add</button>
+      </div>
+      <div class="dim" style="font-size:11px;margin:6px 0 10px">Each register is checked for a <span class="mono">starkexo</span> integration.</div>
+      <div id="regList"></div>
+    </div>
+    <div class="card">
+      <h3>Station</h3>
+      <label class="f">External device ID <span class="dim">(externalDeviceID)</span></label>
+      <div class="row">
+        <input class="t mono" id="devId" placeholder="Station UUID" style="font-size:12px">
+        <button class="btn sm ghost" id="devGen" title="Generate a random UUID">⟳</button>
+      </div>
+      <div class="dim" style="font-size:11px;margin-top:5px" id="devSrc"></div>
+      <label class="f">Next external order ID</label>
+      <input class="t mono" id="orderId">
+      <label class="f">Cart name prefix</label>
+      <input class="t" id="cartPrefix" value="EXO CART">
+      <label class="f">Source</label>
+      <input class="t mono" id="source" value="STARKEXO">
+      <details class="adv">
+        <summary>Service hosts</summary>
+        <label class="f">Transactions host</label>
+        <input class="t mono" id="txHost" style="font-size:12px">
+        <label class="f">Catalog (v3) host</label>
+        <input class="t mono" id="catHost" style="font-size:12px">
+        <div class="hosts" id="hostSrc" style="margin-top:6px"></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- CENTER: bin + shelf -->
+  <div class="col">
+    <div class="stage" id="stage">
+      <div class="stage-head">
+        <div class="ledRow"><span class="led" id="led1"></span><span class="led" id="led2"></span><span class="led" id="led3"></span></div>
+        <div class="title" id="stageTitle">EXO Station</div>
+        <div class="spacer"></div>
+        <div class="lcd" id="lcd">IDLE · pick a register</div>
+      </div>
+      <div class="binWrap" id="binWrap">
+        <div class="waves"><i></i><i></i><i></i></div>
+        <svg id="binSvg" viewBox="0 0 520 300" aria-label="EXO RFID bin">
+          <defs>
+            <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2b3a4a"/><stop offset="1" stop-color="#141c25"/>
+            </linearGradient>
+            <linearGradient id="gFront" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1e2a37"/><stop offset="1" stop-color="#0d131a"/>
+            </linearGradient>
+            <linearGradient id="gInner" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#0a0f14"/><stop offset="1" stop-color="#16202b"/>
+            </linearGradient>
+            <radialGradient id="gGlow" cx=".5" cy=".5" r=".5">
+              <stop offset="0" stop-color="#2b8cff" stop-opacity=".55"/><stop offset="1" stop-color="#2b8cff" stop-opacity="0"/>
+            </radialGradient>
+            <pattern id="grid" width="14" height="14" patternUnits="userSpaceOnUse">
+              <path d="M14 0H0V14" fill="none" stroke="#2b8cff" stroke-opacity=".14" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <!-- floor shadow -->
+          <ellipse cx="260" cy="282" rx="230" ry="14" fill="#000" opacity=".35"/>
+          <!-- back wall -->
+          <path d="M70 70 L450 70 L480 120 L40 120 Z" fill="url(#gBody)" stroke="#3a4d61" stroke-width="1.5"/>
+          <!-- inner basin -->
+          <path d="M58 100 L462 100 L440 210 L80 210 Z" fill="url(#gInner)"/>
+          <path d="M58 100 L462 100 L440 210 L80 210 Z" fill="url(#grid)"/>
+          <ellipse id="glowPanel" cx="260" cy="170" rx="190" ry="44" fill="url(#gGlow)" opacity=".5"/>
+          <!-- antenna coils on the basin floor -->
+          <g stroke="#2b8cff" stroke-opacity=".4" fill="none" stroke-width="1.5">
+            <rect x="140" y="150" width="100" height="40" rx="8"/><rect x="152" y="158" width="76" height="24" rx="5"/>
+            <rect x="280" y="150" width="100" height="40" rx="8"/><rect x="292" y="158" width="76" height="24" rx="5"/>
+          </g>
+          <!-- front lip -->
+          <path class="rim" d="M40 120 L480 120 L462 250 Q460 262 448 262 L72 262 Q60 262 58 250 Z" fill="url(#gFront)" stroke="#3a4d61" stroke-width="1.5"/>
+          <path d="M40 120 L480 120" stroke="#2b8cff" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+          <!-- front panel: label + LEDs -->
+          <rect x="190" y="182" width="140" height="44" rx="10" fill="#0a1016" stroke="#2a3a4a"/>
+          <text x="260" y="203" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="700" font-size="15" fill="#e6edf3" letter-spacing="4">EXO</text>
+          <text x="260" y="218" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" fill="#6b7d91" letter-spacing="2">RFID CHECKOUT</text>
+          <circle id="svgLed" cx="92" cy="236" r="5" fill="#2a3a48"/>
+          <text x="104" y="239" font-family="JetBrains Mono, monospace" font-size="8" fill="#6b7d91" id="svgLedText">STANDBY</text>
+          <g opacity=".5" stroke="#6b7d91" stroke-width="2" stroke-linecap="round">
+            <path d="M400 230 q8 -8 0 -16"/><path d="M410 236 q16 -14 0 -28"/><path d="M420 242 q24 -20 0 -40"/>
+          </g>
+        </svg>
+        <div class="binContents" id="binContents"></div>
+      </div>
+      <div class="emptyHint" id="emptyHint">Drag items into the bin, or tap <b>+</b> on a card</div>
+      <div class="stage-actions">
+        <button class="btn" id="newCartBtn" title="POST /console/transactions/carts/">＋ New basket</button>
+        <button class="btn" id="refreshBtn" title="GET cart">↻ Refresh</button>
+        <button class="btn danger" id="resetBtn" title="DELETE …/reset then PUT status Abandoned">⌫ Empty &amp; abandon</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Shelf <span class="spacer"></span>
+        <span class="dim" style="text-transform:none;letter-spacing:0">qty per drop</span>
+        <span class="qty"><button id="qMinus">−</button><input id="qty" value="1" type="number" min="0" step="1" inputmode="decimal"><button id="qPlus">+</button></span>
+      </h3>
+      <div class="row" style="margin-bottom:12px">
+        <div class="seg" id="fieldSeg" title="Which field the code is sent in"><button type="button" data-f="upc" class="on">UPC</button><button type="button" data-f="itemID">Item ID</button></div>
+        <input class="t mono" id="manualId" placeholder="UPC, e.g. 096619756803 (comma-separate several)" style="flex:1;min-width:140px">
+        <button class="btn primary" id="manualAdd">Drop into bin</button>
+      </div>
+      <div class="dim" style="font-size:11px;margin:-4px 0 12px">Sent exactly as typed, with no lookup, so bad codes and quantities reach the platform. Quantity 0 is allowed so the platform's rejection can be seen; negative quantities are not.</div>
+      <div class="shelf" id="shelf"></div>
+      <div class="empty" id="shelfEmpty">Type a UPC or item ID above. Each one you drop is kept here for reuse.</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: cart + log -->
+  <div class="col" id="cartCol">
+    <div class="card">
+      <h3>Platform cart <span class="spacer"></span><label class="dim" style="text-transform:none;letter-spacing:0;display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="autoPush" checked> push on drop</label></h3>
+      <dl class="kv" id="cartKv"></dl>
+      <div id="cartLines"><div class="empty">No basket yet. Drop an item and one is created.</div></div>
+      <div class="row" style="margin-top:12px;flex-wrap:wrap">
+        <button class="btn primary" id="pushBtn" style="flex:1">Send pending to cart</button>
+      </div>
+      <div class="dim" style="font-size:11px;margin-top:6px" id="pendingNote"></div>
+    </div>
+    <div class="card">
+      <h3>Requests <span class="spacer"></span><button class="btn sm ghost" id="clearLog">Clear</button></h3>
+      <div class="log" id="log"><div class="empty">Nothing sent yet.</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- Login -->
+<div class="overlay" id="loginOverlay">
+  <div class="modal" id="loginModal">
+    <div class="brand" style="margin-bottom:14px"><div class="logo">EX</div><div>EXO Station Simulator<small>sign in to an estate</small></div></div>
+    <h2>Sign in</h2>
+    <div class="muted" style="font-size:13px">Tokens stay in this browser tab only.</div>
+    <label class="f">Environment</label>
+    <div class="seg" id="envSeg2" style="width:100%;display:flex"></div>
+    <div class="tabs"><button class="on" data-tab="pw">Username &amp; password</button><button data-tab="tok">Paste token</button></div>
+    <form id="loginForm" autocomplete="on">
+      <div data-pane="pw">
+        <label class="f">Username</label><input class="t" id="lUser" autocomplete="username">
+        <label class="f">Password</label><input class="t" id="lPass" type="password" autocomplete="current-password">
+        <label class="f">Domain</label><input class="t" id="lDomain" placeholder="merchant domain">
+      </div>
+      <div data-pane="tok" class="hidden">
+        <label class="f">Bearer token</label><input class="t mono" id="lToken" placeholder="AAAA…" style="font-size:12px">
+      </div>
+      <label class="f">Register ID <span class="dim">(EXO-configured)</span></label><input class="t mono" id="lReg" inputmode="numeric" placeholder="e.g. 1234">
+      <div class="err" id="loginErr"></div>
+      <button class="btn primary" id="loginBtn" type="submit" style="width:100%;justify-content:center;margin-top:8px;padding:11px">Sign in</button>
+      <details class="adv"><summary>OAuth details</summary>
+        <label class="f">Platform URL</label><input class="t mono" id="lBase" style="font-size:12px">
+        <label class="f">OAuth client id</label><input class="t mono" id="lClient" style="font-size:12px">
+      </details>
+    </form>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ───────────────── config ───────────────── */
+const ENVS = {
+  beta: { label:'Beta', platform:'https://dev-platform.rc.fyi', client:'rc-onepos-beta', tx:'https://betaaccount.retailcloud.com' },
+  uat:  { label:'UAT',  platform:'https://uat-platform.retailcloud.com', client:'rc-onepos-uat' },
+  prod: { label:'Prod', platform:'https://account.retailcloud.com', client:'rc-onepos-live' },
+};
+const OAUTH_SECRET = 'secret';
+const $ = s => document.querySelector(s);
+const store = {
+  get(k, d){ try { const v = localStorage.getItem('exosim.'+k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v){ try { localStorage.setItem('exosim.'+k, JSON.stringify(v)); } catch {} },
+};
+const sess = {
+  get(k){ try { return JSON.parse(sessionStorage.getItem('exosim.'+k)); } catch { return null; } },
+  set(k, v){ try { v == null ? sessionStorage.removeItem('exosim.'+k) : sessionStorage.setItem('exosim.'+k, JSON.stringify(v)); } catch {} },
+};
+
+const S = {
+  env: store.get('env', 'beta'),
+  auth: null,                 // { token, exp }
+  registers: {},              // env -> [{id, name, storeID, exo, deviceId, integ, hosts}]
+  selected: null,
+  cart: null,                 // platform cart as last fetched
+  pending: [],                // [{itemID, quantity}] dropped but not yet sent
+  items: {},                  // itemID -> {id,name,price,img,upc}
+  shelf: store.get('shelf', {}),
+  busy: false,
+};
+S.auth = sess.get('auth.'+S.env);
+
+/* ───────────────── helpers ───────────────── */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c=='x'?r:(r&3|8)).toString(16); })).toUpperCase();
+const hash = s => { let h = 0; for (const c of String(s)) h = (h*31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
+const envCfg = () => ({ ...ENVS[S.env], ...store.get('envOverride.'+S.env, {}) });
+const regs = () => (S.registers[S.env] ||= store.get('regs.'+S.env, []));
+const saveRegs = () => store.set('regs.'+S.env, regs());
+const reg = () => regs().find(r => String(r.id) === String(S.selected));
+const money = n => n == null || isNaN(n) ? '' : '$' + Number(n).toFixed(2);
+
+function toast(msg, kind=''){
+  const t = document.createElement('div'); t.className = 'toast ' + kind; t.innerHTML = msg;
+  $('#toasts').appendChild(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 320); }, kind === 'bad' ? 6000 : 3200);
+}
+
+/** A garment-ish placeholder so every shelf item has a picture even without catalog imagery. */
+function placeholder(id, name){
+  const h = hash(id) % 360, h2 = (h + 40) % 360;
+  const shapes = [
+    '<path d="M38 26 L52 20 Q60 28 68 20 L82 26 L92 44 L80 50 L78 96 L42 96 L40 50 L28 44 Z"/>',                     // tee
+    '<path d="M44 22 L76 22 L80 40 L86 98 L64 98 L60 56 L56 98 L34 98 L40 40 Z"/>',                                   // trousers
+    '<path d="M36 40 Q60 18 84 40 L84 90 Q60 100 36 90 Z"/><path d="M48 40 Q60 26 72 40" fill="none" stroke-width="5"/>', // bag
+    '<path d="M30 70 Q30 52 50 52 L70 52 Q86 52 90 70 L94 84 L26 84 Z"/><rect x="24" y="84" width="72" height="10" rx="4"/>', // shoe
+    '<path d="M60 22 L92 38 L92 78 L60 96 L28 78 L28 38 Z"/><path d="M28 38 L60 54 L92 38 M60 54 L60 96" fill="none" stroke-width="3"/>', // box
+  ];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${h},55%,24%)"/><stop offset="1" stop-color="hsl(${h2},50%,12%)"/></linearGradient></defs><rect width="120" height="120" fill="url(#g)"/><g fill="hsl(${h},70%,68%)" stroke="hsl(${h},70%,80%)" stroke-opacity=".4">${shapes[hash(id+'s') % shapes.length]}</g><text x="60" y="113" text-anchor="middle" font-family="monospace" font-size="9" fill="hsl(${h},40%,80%)">${esc(String(id).slice(0,14))}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+const imgOf = id => S.items[id]?.img || placeholder(id);
+
+/* ───────────────── network ───────────────── */
+let logEmpty = true;
+function logEntry(method, url, body){
+  if (logEmpty) { $('#log').innerHTML = ''; logEmpty = false; }
+  const d = document.createElement('details'); d.className = 'ent';
+  const path = url.replace(/^https?:\/\/[^/]+/, '');
+  d.innerHTML = `<summary><span class="m ${method}">${method}</span><span class="p" title="${esc(url)}">${esc(path)}</span><span class="c pend"><span class="spin"></span></span></summary><pre class="req"></pre><pre class="res hidden"></pre><div class="tools"><button class="btn sm ghost" data-curl>Copy cURL</button></div>`;
+  d.querySelector('.req').textContent = url + (body != null ? '\n\n' + (typeof body === 'string' ? body : JSON.stringify(body, null, 2)) : '');
+  d.querySelector('[data-curl]').onclick = e => {
+    e.preventDefault();
+    const hdr = url.includes('/oauth/token') ? `--header 'Content-Type: application/x-www-form-urlencoded' --header 'Authorization: Basic …'` : `--header 'Content-Type: application/json' --header 'Authorization: Bearer ${S.auth?.token ?? ''}'`;
+    const c = `curl --location --request ${method} '${url}' ${hdr}` + (body != null ? ` --data '${typeof body === 'string' ? body : JSON.stringify(body)}'` : '');
+    navigator.clipboard?.writeText(c).then(() => toast('cURL copied'));
+  };
+  $('#log').prepend(d);
+  return (status, text, ms) => {
+    const c = d.querySelector('.c');
+    c.className = 'c ' + (status >= 200 && status < 300 ? 'ok' : 'bad');
+    c.textContent = (status || 'ERR') + (ms != null ? ` · ${ms}ms` : '');
+    const r = d.querySelector('.res'); r.classList.remove('hidden');
+    let pretty = text; try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch {}
+    r.textContent = pretty || '(no content)';
+  };
+}
+
+async function api(method, url, { body, auth = true, form, basic, entitlement = true, quiet = false } = {}){
+  const headers = {};
+  let payload;
+  if (form) { headers['Content-Type'] = 'application/x-www-form-urlencoded'; payload = new URLSearchParams(form).toString(); }
+  else if (body !== undefined) { headers['Content-Type'] = 'application/json'; payload = JSON.stringify(body); }
+  if (basic) headers['Authorization'] = basic;
+  else if (auth) {
+    if (!S.auth?.token) { showLogin(); throw new Error('Not signed in'); }
+    headers['Authorization'] = 'Bearer ' + S.auth.token;
+  }
+  const r = reg();
+  if (auth && entitlement && r?.storeID) headers['Entitlement'] = btoa(`LocationType=STORE,LocationID=${r.storeID}`);
+  const done = quiet ? null : logEntry(method, url, form ? payload.replace(/password=[^&]*/, 'password=•••') : body);
+  const t0 = performance.now();
+  let res, text = '';
+  try {
+    res = await fetch(url, { method, headers, body: payload });
+    text = await res.text();
+  } catch (e) {
+    done?.(0, `${e.message}\n\nNetwork or CORS failure. The host must allow this page's origin.`, Math.round(performance.now() - t0));
+    const err = new Error(`Network/CORS error calling ${new URL(url).host}`); err.cors = true; throw err;
+  }
+  done?.(res.status, text, Math.round(performance.now() - t0));
+  let data = null; try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (res.status === 401 && auth) { signOut(true); throw new Error('Session expired, sign in again'); }
+  if (!res.ok) {
+    const msg = (data && (data.message || data.error_description || data.error || data.errors?.[0]?.message)) || `HTTP ${res.status}`;
+    const err = new Error(msg); err.status = res.status; err.data = data; throw err;
+  }
+  return data;
+}
+
+/* ───────────────── env & auth ───────────────── */
+function renderEnv(){
+  for (const id of ['#envSeg', '#envSeg2']) {
+    const el = $(id); el.innerHTML = '';
+    for (const [k, v] of Object.entries(ENVS)) {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = v.label;
+      b.className = k === S.env ? 'on' : ''; if (id === '#envSeg2') b.style.flex = '1';
+      b.onclick = () => switchEnv(k);
+      el.appendChild(b);
+    }
+  }
+  const c = envCfg();
+  $('#lBase').value = c.platform; $('#lClient').value = c.client;
+}
+function switchEnv(k){
+  if (k === S.env) return;
+  S.env = k; store.set('env', k);
+  S.auth = sess.get('auth.'+k); S.selected = store.get('sel.'+k, null); S.cart = null; S.pending = [];
+  renderEnv(); renderAuth(); renderRegs(); selectRegister(S.selected, true);
+  if (!S.auth) showLogin();
+  toast(`Switched to <b>${ENVS[k].label}</b>`);
+}
+function renderAuth(){
+  const ok = !!S.auth?.token;
+  $('#authDot').className = 'dot ' + (ok ? 'ok' : 'bad');
+  $('#authText').textContent = ok ? `${ENVS[S.env].label} · ${S.auth.user || 'token'}` : 'Signed out';
+  $('#logoutBtn').classList.toggle('hidden', !ok);
+}
+function showLogin(){ $('#loginOverlay').classList.remove('hidden'); renderEnv(); setTimeout(() => ($('#lUser').value ? $('#lPass') : $('#lUser')).focus(), 50); }
+function hideLogin(){ $('#loginOverlay').classList.add('hidden'); }
+function signOut(expired){
+  S.auth = null; sess.set('auth.'+S.env, null); renderAuth(); showLogin();
+  if (expired) toast('Token rejected (401). Sign in again.', 'warn');
+}
+
+let loginTab = 'pw';
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  loginTab = b.dataset.tab;
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('[data-pane]').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== loginTab));
+});
+$('#lUser').value = store.get('lastUser.'+S.env, '') || store.get('lastUser', '');
+$('#lDomain').value = store.get('lastDomain', '');
+
+$('#loginForm').onsubmit = async e => {
+  e.preventDefault();
+  const btn = $('#loginBtn'), err = $('#loginErr'); err.textContent = '';
+  const base = $('#lBase').value.trim().replace(/\/+$/, ''), client = $('#lClient').value.trim();
+  store.set('envOverride.'+S.env, { platform: base, client });
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Signing in…';
+  try {
+    if (loginTab === 'tok') {
+      const token = $('#lToken').value.trim().replace(/^Bearer\s+/i, '');
+      if (!token) throw new Error('Paste a bearer token');
+      S.auth = { token, user: 'token' };
+    } else {
+      const username = $('#lUser').value.trim(), password = $('#lPass').value, domain = $('#lDomain').value.trim();
+      if (!username || !password) throw new Error('Username and password are required');
+      const data = await api('POST', base + '/goauth/oauth/token', {
+        auth: false, basic: 'Basic ' + btoa(`${client}:${OAUTH_SECRET}`),
+        form: { username, password, domain, grant_type: 'password', scope: 'write' },
+      });
+      if (!data?.access_token) throw new Error('No access_token in response');
+      S.auth = { token: data.access_token, user: username, exp: Date.now() + (data.expires_in || 0) * 1000 };
+      store.set('lastUser', username); store.set('lastDomain', domain);
+      $('#lPass').value = '';
+    }
+    sess.set('auth.'+S.env, S.auth); renderAuth(); hideLogin();
+    toast(`Signed in to <b>${ENVS[S.env].label}</b>`);
+    const rid = $('#lReg').value.trim();
+    if (rid) { await addRegister(rid); }
+    else if (S.selected) selectRegister(S.selected, true);
+  } catch (ex) {
+    err.textContent = ex.message; $('#loginModal').classList.remove('shake'); void $('#loginModal').offsetWidth; $('#loginModal').classList.add('shake');
+  } finally { btn.disabled = false; btn.textContent = 'Sign in'; }
+};
+$('#logoutBtn').onclick = () => signOut(false);
+
+/* ───────────────── registers ───────────────── */
+/** EXO station id: the first UUID-shaped value anywhere in the starkexo integration row. */
+function findUuid(o){
+  const re = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  let hit = null, path = null;
+  (function walk(v, p){
+    if (hit) return;
+    if (typeof v === 'string' && re.test(v.trim())) { hit = v.trim(); path = p; return; }
+    if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, p ? `${p}.${k}` : k);
+  })(o, '');
+  return hit ? { value: hit, path } : null;
+}
+function hostFrom(meta, key){
+  const row = meta?.environment?.configuration?.v2?.find(s => s.hostKey === key);
+  return row?.url ? `${row.protocol || 'https'}://${row.url}`.replace(/\/+$/, '') : null;
+}
+
+async function inspectRegister(r){
+  const base = envCfg().platform;
+  const [meta, info] = await Promise.allSettled([
+    api('GET', `${base}/console/business/registers/${r.id}/metadata?expand=environment,integration`, { entitlement: false }),
+    api('GET', `${base}/console/business/registers/${r.id}`, { entitlement: false }),
+  ]);
+  if (meta.status === 'rejected') throw meta.reason;
+  const m = meta.value, i = info.status === 'fulfilled' ? info.value : null;
+  const integ = (m?.integrations || []).find(x => String(x.alias).trim().toLowerCase() === 'starkexo') || null;
+  r.exo = !!integ; r.integ = integ;
+  r.name = i?.name || r.name || ''; r.storeID = i?.storeID || i?.store?.id || r.storeID || null;
+  r.store = i?.store?.name || i?.storeName || ''; r.venue = i?.venue?.name || '';
+  r.hosts = { tx: hostFrom(m, 'v2.service.transactions'), cat: hostFrom(m, 'v3.service.catalog') };
+  const u = integ && findUuid(integ);
+  if (u && !r.deviceIdEdited) { r.deviceId = u.value; r.deviceSrc = `from starkexo · ${u.path}`; }
+  r.deviceId ||= uuid(); r.deviceSrc ||= 'generated · no UUID on the integration';
+  r.checked = Date.now();
+  return r;
+}
+
+async function addRegister(id){
+  id = String(id).trim(); if (!/^\d+$/.test(id)) { toast('Register ID must be a number', 'bad'); return; }
+  let r = regs().find(x => String(x.id) === id);
+  if (!r) { r = { id, checking: true }; regs().unshift(r); }
+  r.checking = true; renderRegs();
+  try { await inspectRegister(r); toast(r.exo ? `Register <b>${id}</b> has an EXO station` : `Register <b>${id}</b> has no <span class="mono">starkexo</span> integration`, r.exo ? '' : 'warn'); }
+  catch (e) { r.error = e.message; toast(`Register ${id}: ${esc(e.message)}`, 'bad'); }
+  finally { r.checking = false; saveRegs(); renderRegs(); selectRegister(id, true); }
+}
+
+function renderRegs(){
+  const list = regs(), el = $('#regList');
+  $('#regCount').textContent = list.length ? `${list.filter(r => r.exo).length}/${list.length} EXO` : '';
+  if (!list.length) { el.innerHTML = '<div class="empty">Add a register configured for EXO.</div>'; return; }
+  el.innerHTML = list.map(r => `
+    <div class="reg ${String(r.id) === String(S.selected) ? 'sel' : ''}" data-id="${esc(r.id)}">
+      <div class="top"><span class="id">#${esc(r.id)}</span>
+        ${r.checking ? '<span class="badge chk"><span class="spin" style="width:9px;height:9px;border-width:1.5px"></span></span>' : r.exo ? '<span class="badge exo">EXO</span>' : r.error ? '<span class="badge noexo">error</span>' : '<span class="badge noexo">no exo</span>'}
+      </div>
+      <div class="name">${esc([r.name, r.store].filter(Boolean).join(' · ') || r.error || '—')}</div>
+      <button class="btn sm ghost x" data-rm="${esc(r.id)}" title="Remove">✕</button>
+    </div>`).join('');
+  el.querySelectorAll('.reg').forEach(d => d.onclick = e => {
+    if (e.target.closest('[data-rm]')) {
+      const id = e.target.closest('[data-rm]').dataset.rm;
+      S.registers[S.env] = regs().filter(x => String(x.id) !== id); saveRegs();
+      if (String(S.selected) === id) selectRegister(null, true);
+      renderRegs(); return;
+    }
+    selectRegister(d.dataset.id);
+  });
+}
+
+function selectRegister(id, silent){
+  S.selected = id; store.set('sel.'+S.env, id);
+  const r = reg();
+  S.cart = r ? store.get(`cart.${S.env}.${r.id}`, null) : null; S.pending = [];
+  $('#devId').value = r?.deviceId || ''; $('#devSrc').textContent = r?.deviceSrc || '';
+  $('#orderId').value = r ? store.get(`order.${S.env}.${r.id}`, String(100000 + Math.floor(Math.random()*899999))) : '';
+  $('#txHost').value = r?.txOverride || r?.hosts?.tx || envCfg().tx || envCfg().platform;
+  $('#catHost').value = r?.catOverride || r?.hosts?.cat || envCfg().platform;
+  $('#hostSrc').textContent = r ? (r.hosts?.tx ? 'Resolved from the register metadata environment table.' : 'Metadata named no host; using the estate default.') : '';
+  $('#stageTitle').textContent = r ? `EXO Station · Register #${r.id}` : 'EXO Station';
+  renderRegs(); renderBin(true); renderCart(); setLcd();
+  if (r && S.cart?.cartID && S.auth) refreshCart(true);
+  if (r && !silent && !r.exo && !r.checking) toast('This register has no <span class="mono">starkexo</span> integration. The till will ignore its baskets.', 'warn');
+  renderShelf();
+}
+
+$('#regAdd').onclick = () => { const v = $('#regInput').value; $('#regInput').value = ''; addRegister(v); };
+$('#regInput').onkeydown = e => { if (e.key === 'Enter') $('#regAdd').click(); };
+$('#devId').oninput = () => { const r = reg(); if (!r) return; r.deviceId = $('#devId').value.trim(); r.deviceIdEdited = true; r.deviceSrc = 'edited'; $('#devSrc').textContent = 'edited'; saveRegs(); };
+$('#devGen').onclick = () => { $('#devId').value = uuid(); $('#devId').oninput(); };
+$('#orderId').oninput = () => { const r = reg(); r && store.set(`order.${S.env}.${r.id}`, $('#orderId').value.trim()); };
+$('#txHost').oninput = () => { const r = reg(); if (r) { r.txOverride = $('#txHost').value.trim(); saveRegs(); } };
+$('#catHost').oninput = () => { const r = reg(); if (r) { r.catOverride = $('#catHost').value.trim(); saveRegs(); } };
+const txBase = () => $('#txHost').value.trim().replace(/\/+$/, '');
+const catBase = () => $('#catHost').value.trim().replace(/\/+$/, '');
+
+/* ───────────────── catalog shelf ───────────────── */
+function toItem(d){
+  const imgs = (d.image_details || []).filter(x => x?.url);
+  const img = (imgs.find(x => String(x.type).toUpperCase() === 'PRIMARY') || imgs[0])?.url || null;
+  return { id: String(d.id), name: d.name || String(d.id), price: d.selling_price, upc: d.upc, img };
+}
+function remember(items){
+  const shelf = (S.shelf[S.env] ||= {});
+  for (const it of items) { S.items[it.id] = { ...S.items[it.id], ...it }; shelf[it.id] = it; }
+  store.set('shelf', S.shelf);
+}
+Object.values(S.shelf).forEach(env => Object.values(env).forEach(it => S.items[it.id] = it));
+
+async function lookupItems(ids){
+  const missing = ids.filter(id => !S.items[id]?.name || S.items[id].name === id);
+  if (!missing.length || !reg() || S.catalogBlocked) return;
+  try {
+    const p = new URLSearchParams({ filter: `id:in:${missing.join(',')}`, size: '100' });
+    const data = await api('GET', `${catBase()}/api/v3/catalog/items?${p}`, { quiet: true });
+    remember((data?.data || []).map(toItem)); renderCart(); renderBin(); renderShelf();
+  } catch (e) { if (e.cors) S.catalogBlocked = true; }
+}
+
+/** The v3 catalog service answers a browser preflight with 401 and sends no CORS headers, so from a page it is
+ *  unreachable. Everything else still works; the shelf just fills from what the user types. */
+let catalogWarned = false;
+function catalogBlocked(){
+  S.catalogBlocked = true; renderShelf();
+  if (!catalogWarned) { catalogWarned = true; toast('UPC lookup is unavailable from a browser (the catalog service sends no CORS headers). Codes are sent as typed.', 'warn'); }
+}
+
+let shelfFocus = null;
+function renderShelf(focusIds){
+  if (focusIds !== undefined) shelfFocus = focusIds;
+  const all = Object.values(S.shelf[S.env] || {});
+  const list = shelfFocus ? shelfFocus.map(id => S.items[id]).filter(Boolean) : all;
+  $('#shelfEmpty').classList.toggle('hidden', list.length > 0);
+  $('#shelfEmpty').innerHTML = S.catalogBlocked
+    ? 'Type an <b>item ID</b> above. UPCs cannot be looked up from a browser (the catalog service sends no CORS headers), so they are sent as typed.'
+    : 'Type an item ID or UPC above. Each one you drop is kept here for reuse.';
+  $('#shelf').innerHTML = list.map((it, i) => `
+    <div class="item" draggable="true" data-id="${esc(it.id)}" data-field="${esc(it.field || 'itemID')}" data-key="${esc(it.key || it.id)}" style="animation-delay:${Math.min(i, 20) * 25}ms">
+      <div class="img"><img loading="lazy" src="${esc(it.img || placeholder(it.id))}" alt="" onerror="this.src='${placeholder(it.id)}'"></div>
+      <div class="meta"><div class="nm">${esc(S.items[it.id]?.name && S.items[it.id].name !== it.id ? S.items[it.id].name : it.name)}</div><div class="sub"><span class="mono">${esc(it.id)}</span><b>${(it.field || 'itemID') === 'upc' ? 'UPC' : 'ID'}</b></div></div>
+      <button class="add" data-add title="Drop into bin">+</button>
+      <button class="rm" data-rm title="Remove from shelf">✕</button>
+    </div>`).join('');
+  $('#shelf').querySelectorAll('.item').forEach(el => {
+    el.querySelector('[data-add]').onclick = e => { e.stopPropagation(); drop(el.dataset.id, qty(), el.querySelector('img'), null, el.dataset.field); };
+    el.querySelector('[data-rm]').onclick = e => { e.stopPropagation(); delete S.shelf[S.env][el.dataset.key]; store.set('shelf', S.shelf); renderShelf(); };
+    el.ondblclick = () => drop(el.dataset.id, qty(), el.querySelector('img'), null, el.dataset.field);
+    el.ondragstart = e => { e.dataTransfer.setData('text/plain', JSON.stringify({ code: el.dataset.id, field: el.dataset.field })); e.dataTransfer.effectAllowed = 'copy'; };
+  });
+}
+let sendField = store.get('sendField', 'upc');
+function renderField(){
+  document.querySelectorAll('#fieldSeg button').forEach(b => b.classList.toggle('on', b.dataset.f === sendField));
+  $('#manualId').placeholder = sendField === 'upc' ? 'UPC, e.g. 096619756803 (comma-separate several)' : 'Item ID, e.g. AG3244212 (comma-separate several)';
+}
+document.querySelectorAll('#fieldSeg button').forEach(b => b.onclick = () => { sendField = b.dataset.f; store.set('sendField', sendField); renderField(); });
+renderField();
+const shelfKey = (field, code) => `${field}:${code}`;
+$('#manualAdd').onclick = async () => {
+  const codes = $('#manualId').value.split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
+  if (!codes.length) return;
+  if (!reg()) { toast('Pick a register first', 'warn'); return; }
+  $('#manualId').value = '';
+  const btn = $('#manualAdd'); btn.disabled = true;
+  try {
+    for (const code of codes) {
+      const key = shelfKey(sendField, code);
+      if (!S.shelf[S.env]?.[key]) { const sh = (S.shelf[S.env] ||= {}); sh[key] = { key, id: code, field: sendField, name: code }; store.set('shelf', S.shelf); renderShelf(); }
+      drop(code, qty(), $('#manualId'), null, sendField); await new Promise(r => setTimeout(r, 140));
+    }
+  } finally { btn.disabled = false; }
+};
+$('#manualId').onkeydown = e => { if (e.key === 'Enter') $('#manualAdd').click(); };
+const qty = () => { const v = parseFloat($('#qty').value); return isNaN(v) ? 1 : v; };
+$('#qMinus').onclick = () => $('#qty').value = Math.max(1, Math.round(qty()) - 1);
+$('#qty').onchange = () => { if (qty() < 0) { $('#qty').value = 1; toast('Quantity cannot be negative', 'warn'); } };
+$('#qPlus').onclick = () => $('#qty').value = Math.round(qty()) + 1;
+
+/* ───────────────── bin ───────────────── */
+const stage = $('#stage');
+stage.ondragover = e => { e.preventDefault(); stage.classList.add('dragover'); };
+stage.ondragleave = e => { if (!stage.contains(e.relatedTarget)) stage.classList.remove('dragover'); };
+stage.ondrop = e => {
+  e.preventDefault(); stage.classList.remove('dragover');
+  const raw = e.dataTransfer.getData('text/plain'); if (!raw) return;
+  let d; try { d = JSON.parse(raw); } catch { d = { code: raw.trim(), field: sendField }; }
+  drop(d.code, qty(), null, { x: e.clientX, y: e.clientY }, d.field);
+};
+
+/** Arc a copy of the picture from where it was into the mouth of the bin. */
+function fly(id, fromEl, point){
+  return new Promise(res => {
+    const target = $('#binContents').getBoundingClientRect();
+    let r = fromEl?.getBoundingClientRect();
+    if (!r || !r.width) r = point ? { left: point.x - 40, top: point.y - 40, width: 80, height: 80 } : { left: target.left + target.width/2 - 40, top: target.top - 220, width: 80, height: 80 };
+    const size = Math.min(110, Math.max(64, r.width));
+    const f = document.createElement('div'); f.className = 'flyer';
+    f.style.cssText = `left:${r.left + r.width/2 - size/2}px;top:${r.top + r.height/2 - size/2}px;width:${size}px;height:${size}px`;
+    f.innerHTML = `<img src="${esc(imgOf(id))}">`;
+    document.body.appendChild(f);
+    const dx = target.left + target.width/2 - (r.left + r.width/2) + (Math.random()*120 - 60);
+    const dy = target.top + target.height*0.55 - (r.top + r.height/2);
+    const lift = Math.min(-80, dy * 0.4 - 120);
+    const rot = (Math.random() * 60 - 30) | 0;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { f.remove(); return res(); }
+    f.animate([
+      { transform: 'translate(0,0) scale(1) rotate(0)', opacity: 1 },
+      { transform: `translate(${dx*0.5}px,${lift}px) scale(.9) rotate(${rot/2}deg)`, opacity: 1, offset: .45 },
+      { transform: `translate(${dx}px,${dy}px) scale(.55) rotate(${rot}deg)`, opacity: .9 },
+    ], { duration: 720, easing: 'cubic-bezier(.4,.0,.6,1)' }).onfinish = () => { f.remove(); res(); };
+  });
+}
+
+/** What is physically in the bin: the platform cart's live lines plus whatever was dropped and not yet sent. */
+function binLines(){
+  const m = new Map();
+  for (const l of (cartClosed(S.cart) ? [] : (S.cart?.items || []))) {
+    if (String(l.status || '').toUpperCase() === 'DISCARDED') continue;
+    const id = String(l.itemID || l.upc); m.set(id, (m.get(id) || 0) + (+l.quantity || 1));
+  }
+  for (const p of S.pending) m.set(p.code, (m.get(p.code) || 0) + p.quantity);
+  return [...m.entries()].map(([id, q]) => ({ id, q }));
+}
+const slots = {};
+function renderBin(reset){
+  const box = $('#binContents'); if (reset) { box.innerHTML = ''; for (const k in slots) delete slots[k]; }
+  const lines = binLines(), W = box.clientWidth || 340;
+  const seen = new Set();
+  lines.forEach((l, i) => {
+    seen.add(l.id);
+    let el = box.querySelector(`[data-bin="${CSS.escape(l.id)}"]`);
+    if (!el) {
+      el = document.createElement('div'); el.className = 'binItem'; el.dataset.bin = l.id;
+      el.innerHTML = `<span class="tag"></span><img alt=""><span class="q"></span>`;
+      el.style.opacity = '0'; box.appendChild(el);
+      requestAnimationFrame(() => el.style.opacity = '1');
+    }
+    el.querySelector('img').src = imgOf(l.id);
+    el.querySelector('.q').textContent = '×' + (+l.q.toFixed(3));
+    el.title = `${S.items[l.id]?.name || l.id} × ${l.q}`;
+    const cols = Math.max(1, Math.floor((W - 20) / 50)), c = i % cols, row = Math.floor(i / cols);
+    const s = slots[l.id] ||= { r: (hash(l.id) % 30) - 15, j: (hash(l.id + 'j') % 14) - 7 };
+    el.style.left = `${c * ((W - 62) / Math.max(1, cols - 1 || 1))}px`;
+    el.style.top = `${40 - row * 18 + s.j}px`;
+    el.style.zIndex = 10 + row * -1 + i;
+    el.style.transform = `rotate(${s.r}deg)`;
+  });
+  box.querySelectorAll('[data-bin]').forEach(el => { if (!seen.has(el.dataset.bin)) { el.classList.add('leaving'); setTimeout(() => el.remove(), 450); } });
+  $('#emptyHint').style.opacity = lines.length ? 0 : 1;
+}
+function gulp(){ stage.classList.remove('gulp'); void stage.offsetWidth; stage.classList.add('gulp'); }
+function setLcd(text, mode){
+  const r = reg();
+  const lines = binLines();
+  const t = text || (!r ? 'IDLE · pick a register' : cartClosed(S.cart) ? `CART ${S.cart.cartID} CLOSED` : S.cart?.cartID ? `CART ${S.cart.cartID} · ${lines.reduce((a, l) => a + l.q, 0)} TAGS` : 'READY · bin empty');
+  $('#lcd').textContent = t;
+  const led = $('#svgLed'), lt = $('#svgLedText');
+  const m = mode || (!r ? 'off' : S.busy ? 'busy' : S.cart?.cartID ? 'on' : 'ready');
+  const col = { off: '#2a3a48', ready: '#5cc8ff', busy: '#ffb84d', on: '#2b8cff', err: '#ff5d6c' }[m];
+  led.setAttribute('fill', col); lt.textContent = { off: 'STANDBY', ready: 'READY', busy: 'READING', on: 'BASKET LIVE', err: 'FAULT' }[m];
+  $('#led1').className = 'led ' + (r ? 'g' : '');
+  $('#led2').className = 'led ' + (m === 'busy' ? 'a blink' : m === 'err' ? 'r' : S.cart?.cartID ? 'g' : '');
+  $('#led3').className = 'led ' + (S.auth ? 'g' : 'r');
+  stage.classList.toggle('scanning', m === 'busy');
+}
+
+async function drop(id, q, fromEl, point, field = 'itemID'){
+  if (q < 0) { toast('Quantity cannot be negative', 'warn'); return; }
+  const r = reg();
+  if (!r) { toast('Pick a register first', 'warn'); return; }
+  if (!S.items[id]) S.items[id] = { id, name: id };
+  const flying = fly(id, fromEl, point);
+  const p = S.pending.find(x => x.code === id && x.field === field);
+  p ? p.quantity += q : S.pending.push({ field, code: id, quantity: q });
+  await flying; gulp(); renderBin(); renderCart(); setLcd();
+  if ($('#autoPush').checked) schedulePush();
+}
+/** A cart the till will refuse (HW-0008 guards): abandoned, parked, or already turned into an order. Items added to
+ *  one still announce themselves by push, and the till rejects every one, so such a cart is never reused. */
+function cartClosed(c){
+  if (!c) return false;
+  const st = String(c.status || '').toUpperCase();
+  return ['ABANDONED', 'SUSPENDED', 'RESUMED', 'COMPLETED', 'CLOSED'].includes(st) || !!c.orderID;
+}
+let pushTimer = null;
+function schedulePush(){ clearTimeout(pushTimer); pushTimer = setTimeout(pushPending, 450); }
+
+/* ───────────────── cart calls ───────────────── */
+async function createCart(){
+  const r = reg(); if (!r) throw new Error('Pick a register');
+  const deviceId = $('#devId').value.trim(); if (!deviceId) throw new Error('Set an external device ID');
+  const orderId = $('#orderId').value.trim() || String(Date.now()).slice(-6);
+  const body = {
+    cartName: `${$('#cartPrefix').value.trim() || 'EXO CART'} ${orderId}`,
+    metadata: { externalDeviceID: deviceId, externalOrderID: orderId },
+    source: $('#source').value.trim() || 'STARKEXO',
+  };
+  const data = await api('POST', `${txBase()}/console/transactions/carts/`, { body });
+  const cartID = data?.cartID ?? data?.id ?? data?.data?.cartID;
+  if (!cartID) throw new Error('Cart created but no cartID in the response');
+  S.cart = { ...(typeof data === 'object' ? data : {}), cartID };
+  store.set(`cart.${S.env}.${r.id}`, { cartID });
+  if (/^\d+$/.test(orderId)) { $('#orderId').value = String(+orderId + 1); $('#orderId').oninput(); }
+  toast(`Basket <b class="mono">${cartID}</b> opened`);
+  return cartID;
+}
+
+async function pushPending(){
+  if (S.busy || !S.pending.length) return;
+  S.busy = true; setLcd('READING TAGS…', 'busy'); $('#pushBtn').disabled = true;
+  const batch = S.pending.splice(0);
+  try {
+    if (S.cart?.cartID) {
+      // Re-read first: the till may have closed it since (clearing its cart abandons the basket).
+      await refreshCart(true);
+      if (cartClosed(S.cart)) {
+        toast(`Basket <b class="mono">${S.cart.cartID}</b> is ${esc(S.cart.status || 'ordered')}. Opening a new one.`, 'warn');
+        S.cart = null; store.set(`cart.${S.env}.${reg().id}`, null);
+      }
+    }
+    if (!S.cart?.cartID) await createCart();
+    const body = batch.map(b => ({ [b.field]: b.code, quantity: b.quantity }));
+    await api('PATCH', `${txBase()}/console/transactions/carts/${S.cart.cartID}/items`, { body });
+    await refreshCart(true);
+    // The platform answers 200 for a code it cannot place and simply adds no line, so say so.
+    const live = S.cart?.items || [];
+    const dropped = batch.filter(b => !live.some(l => String(b.field === 'upc' ? l.upc : l.itemID) === b.code || String(l.itemID) === b.code || String(l.upc) === b.code));
+    if (dropped.length) {
+      const why = code => (S.cart?.errors || []).filter(e => String(e.message).includes(code)).map(e => e.message).pop();
+      dropped.forEach(d => toast(esc(why(d.code) || `Platform ignored ${d.field}=${d.code}: no line was added`), 'bad'));
+    }
+    const okCount = batch.length - dropped.length;
+    if (okCount) toast(`Sent ${okCount} line${okCount > 1 ? 's' : ''} to the register`);
+  } catch (e) {
+    S.pending.unshift(...batch);
+    toast(esc(e.message), 'bad'); setLcd('FAULT · ' + e.message.slice(0, 40), 'err');
+  } finally {
+    S.busy = false; $('#pushBtn').disabled = false; renderBin(); renderCart();
+    if (!$('#lcd').textContent.startsWith('FAULT')) setLcd();
+    if (S.pending.length && $('#autoPush').checked && !$('#lcd').textContent.startsWith('FAULT')) schedulePush();
+  }
+}
+
+async function refreshCart(quietToast){
+  const r = reg(); if (!r || !S.cart?.cartID) return;
+  try {
+    const data = await api('GET', `${txBase()}/console/transactions/carts/${S.cart.cartID}?expand=payment`);
+    S.cart = { ...data, cartID: data?.cartID ?? S.cart.cartID };
+    const ids = (S.cart.items || []).map(l => String(l.itemID)).filter(Boolean);
+    for (const l of (S.cart.items || [])) if (l.itemID && !S.items[l.itemID]?.name && l.name) S.items[l.itemID] = { ...S.items[l.itemID], id: String(l.itemID), name: l.name };
+    lookupItems([...new Set(ids)]);
+    if (!quietToast) toast('Cart refreshed');
+  } catch (e) {
+    if (e.status === 404) { S.cart = null; store.set(`cart.${S.env}.${r.id}`, null); toast('Saved basket no longer exists', 'warn'); }
+    else toast(esc(e.message), 'bad');
+  }
+  renderBin(); renderCart(); setLcd();
+}
+
+async function liftLine(cartItemID, itemID){
+  if (!S.cart?.cartID) return;
+  const el = $('#binContents').querySelector(`[data-bin="${CSS.escape(String(itemID))}"]`);
+  el?.animate([{ transform: el.style.transform }, { transform: 'translateY(-160px) rotate(25deg) scale(.7)', opacity: 0 }], { duration: 500, easing: 'ease-in' });
+  try {
+    await api('DELETE', `${txBase()}/console/transactions/carts/${S.cart.cartID}/items/${cartItemID}`);
+    toast('Item lifted out of the bin');
+  } catch (e) { toast(esc(e.message), 'bad'); }
+  await refreshCart(true);
+}
+
+async function resetCart(){
+  const r = reg();
+  if (!S.cart?.cartID) { S.pending = []; renderBin(); renderCart(); setLcd(); return; }
+  if (!confirm(`Empty and abandon basket ${S.cart.cartID}?`)) return;
+  const id = S.cart.cartID;
+  $('#binContents').querySelectorAll('.binItem').forEach((el, i) => setTimeout(() => el.classList.add('leaving'), i * 60));
+  try {
+    await api('DELETE', `${txBase()}/console/transactions/carts/${id}/reset`);
+    await api('PUT', `${txBase()}/console/transactions/carts/${id}`, { body: { cartID: id, status: 'Abandoned' } });
+    toast(`Basket <b class="mono">${id}</b> abandoned`);
+  } catch (e) { toast(esc(e.message), 'bad'); }
+  S.cart = null; S.pending = []; store.set(`cart.${S.env}.${r.id}`, null);
+  setTimeout(() => { renderBin(true); renderCart(); setLcd(); }, 400);
+}
+
+$('#newCartBtn').onclick = async () => {
+  if (S.cart?.cartID && !confirm(`Start a new basket? Basket ${S.cart.cartID} stays open on the platform.`)) return;
+  S.cart = null; S.pending = []; renderBin(true);
+  try { S.busy = true; setLcd('OPENING BASKET…', 'busy'); await createCart(); await refreshCart(true); }
+  catch (e) { toast(esc(e.message), 'bad'); }
+  finally { S.busy = false; renderCart(); setLcd(); }
+};
+$('#refreshBtn').onclick = () => S.cart?.cartID ? refreshCart(false) : toast('No basket yet', 'warn');
+$('#resetBtn').onclick = resetCart;
+$('#pushBtn').onclick = pushPending;
+$('#clearLog').onclick = () => { $('#log').innerHTML = '<div class="empty">Nothing sent yet.</div>'; logEmpty = true; };
+
+function renderCart(){
+  const c = S.cart, r = reg();
+  const kv = [];
+  if (r) kv.push(['Register', '#' + r.id + (r.exo ? '' : ' (no starkexo)')]);
+  if (c?.cartID) {
+    kv.push(['Cart ID', c.cartID]);
+    if (c.cartName) kv.push(['Name', c.cartName]);
+    if (c.status) kv.push(['Status', `<span class="status ${esc(c.status)}">${esc(c.status)}</span>`]);
+    if (c.paymentStatus) kv.push(['Payment', c.paymentStatus]);
+    if (c.registerID) kv.push(['Addressed to', '#' + c.registerID + (r && String(c.registerID) !== String(r.id) ? ' ⚠ other register' : '')]);
+    if (c.source) kv.push(['Source', c.source]);
+    if (c.orderID) kv.push(['Order', c.orderID]);
+  }
+  if (cartClosed(c)) kv.push(['⚠', `Closed (${esc(c.status || 'ordered')}): the till ignores it. The next drop opens a new basket.`]);
+  $('#cartKv').innerHTML = kv.map(([k, v]) => `<dt>${k}</dt><dd style="${k === '⚠' ? 'white-space:normal;color:var(--warn)' : ''}">${String(v).startsWith('<') || k === '⚠' ? v : esc(v)}</dd>`).join('');
+  const lines = [...(c?.items || [])].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+  let html = lines.map(l => {
+    const id = String(l.itemID || l.upc || ''), it = S.items[id];
+    const disc = String(l.status || '').toUpperCase() === 'DISCARDED';
+    return `<div class="line ${disc ? 'discarded' : ''}"><div class="th"><img src="${esc(imgOf(id))}" alt=""></div>
+      <div class="nf"><div class="a">${esc(l.name || it?.name || id)}</div><div class="b">${esc(id)}${l.upc && String(l.upc) !== id ? ' · upc ' + esc(l.upc) : ''} · line ${esc(l.cartItemID)}${l.status ? ' · ' + esc(l.status) : ''}</div></div>
+      <span class="qn">×${esc(+(+l.quantity || 0).toFixed(3))}</span>
+      ${disc ? '' : `<button class="btn sm ghost" data-lift="${esc(l.cartItemID)}" data-item="${esc(id)}" title="Lift out (DELETE line)">↑</button>`}</div>`;
+  }).join('');
+  html += S.pending.map(p => `<div class="line" style="border-style:dashed"><div class="th"><img src="${esc(imgOf(p.code))}" alt=""></div>
+      <div class="nf"><div class="a">${esc(S.items[p.code]?.name || p.code)}</div><div class="b">${esc(p.field)}=${esc(p.code)} · pending</div></div>
+      <span class="qn">+${esc(p.quantity)}</span></div>`).join('');
+  const errs = c?.errors || [];
+  if (errs.length) html += `<div style="margin-top:12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--err);font-weight:600">Cart errors · ${errs.length}</div>` +
+    errs.map(e => `<div class="line" style="border-color:color-mix(in srgb,var(--err) 45%,var(--line))"><div class="th" style="display:grid;place-items:center;color:var(--err);font-weight:800">!</div>
+      <div class="nf"><div class="a" style="white-space:normal">${esc(e.message)}</div><div class="b">error ${esc(e.id)}</div></div></div>`).join('');
+  $('#cartLines').innerHTML = html || `<div class="empty">${c?.cartID ? 'Basket is empty.' : 'No basket yet. Drop an item and one is created.'}</div>`;
+  $('#cartLines').querySelectorAll('[data-lift]').forEach(b => b.onclick = () => liftLine(b.dataset.lift, b.dataset.item));
+  $('#pendingNote').textContent = S.pending.length ? `${S.pending.length} line(s) in the bin not yet sent.` : '';
+  $('#pushBtn').disabled = !S.pending.length;
+}
+
+/* ───────────────── theme & boot ───────────────── */
+const theme = store.get('theme', null); if (theme) document.documentElement.dataset.theme = theme;
+$('#themeBtn').onclick = () => {
+  const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = t; store.set('theme', t);
+};
+window.addEventListener('resize', () => renderBin());
+
+renderEnv(); renderAuth(); renderRegs();
+S.selected = store.get('sel.'+S.env, null);
+selectRegister(S.selected, true);
+if (S.auth) hideLogin(); else showLogin();
+})();
+</script>
+</body>
+</html>
